@@ -1,0 +1,23 @@
+********* Start testing of TestCore *********
+Config: Using QtTest library 6.8.2, Qt 6.8.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : TestCore::initTestCase()
+PASS   : TestCore::duplicatesGrouping()
+PASS   : TestCore::emptyFilesGroup()
+PASS   : TestCore::sameSizeDifferentContent()
+PASS   : TestCore::nestedFolders()
+PASS   : TestCore::unicodeAndSpaces()
+PASS   : TestCore::recoverableMath()
+SKIP   : TestCore::symlinksSkipped() symlink creation unsupported in this environment
+C:\Users\22\Downloads\opencode\SaveGuard\tests\TestCore.cpp(202) : failure location
+PASS   : TestCore::cancelScan()
+QWARN  : TestCore::inaccessibleFile() QTemporaryDir: Unable to remove "C:\\Users\\22\\AppData\\Local\\Temp\\SaveGuardTests-RLLPgc" most likely due to the presence of read-only files.
+PASS   : TestCore::inaccessibleFile()
+PASS   : TestCore::changedFileRejectedByRevalidation()
+PASS   : TestCore::trashFailureOnMissingFile()
+PASS   : TestCore::protectedPathRefused()
+PASS   : TestCore::cleanupSuccessMovesToTrash()
+PASS   : TestCore::historyRoundTrip()
+PASS   : TestCore::hasherCancel()
+PASS   : TestCore::cleanupTestCase()
+Totals: 16 passed, 0 failed, 1 skipped, 0 blacklisted, 511ms
+********* Finished testing of TestCore *********
