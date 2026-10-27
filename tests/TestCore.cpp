@@ -253,8 +253,10 @@ void TestCore::inaccessibleFile() {
 
 #ifdef Q_OS_WIN
     QProcess restore;
-    restore.start(QStringLiteral("icacls"), QStringList{} << sub << QStringLiteral("/reset") << QStringLiteral("*S-1-1-0"));
+    restore.start(QStringLiteral("icacls"), QStringList{} << sub << QStringLiteral("/remove:d")
+                                                          << QStringLiteral("*S-1-1-0"));
     restore.waitForFinished(5000);
+    QVERIFY2(restore.exitCode() == 0, "icacls /remove:d failed - test would leave denied ACL residue");
 #else
     chmod(qPrintable(sub), 0755);
 #endif
