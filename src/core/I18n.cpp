@@ -9,6 +9,7 @@ I18n& I18n::instance() {
 I18n::I18n() {
     m_language = Settings::instance().language();
     m_table = {
+        {"app_name", {"SaveGuard", "SaveGuard"}},
         {"tagline", {"Localizador de duplicatas e espaço em disco", "Duplicate finder and disk space cleaner"}},
         {"nav_dashboard", {"Painel", "Dashboard"}},
         {"nav_duplicates", {"Duplicatas", "Duplicates"}},

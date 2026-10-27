@@ -55,7 +55,8 @@ DuplicateDetector::GroupingOutput DuplicateDetector::group(
 
     qint64 totalToHash = 0;
     for (const auto& c : candidates) totalToHash += qint64(c.second->size());
-    qint64 hashedDone = 0;
+    std::atomic<qint64> hashErrors{0};
+    std::atomic<qint64> hashedDone{0};
 
     for (const auto& cand : candidates) {
         if (shouldCancel()) {
@@ -75,9 +76,9 @@ DuplicateDetector::GroupingOutput DuplicateDetector::group(
                 files[i].miniHash = mh;
                 byMini[mh].push_back(std::move(files[i]));
             } else if (st == Hasher::Status::Failed) {
-                out.hashErrors++;
+                hashErrors.fetch_add(1, std::memory_order_relaxed);
             }
-            const int done = ++hashedDone;
+            const qint64 done = hashedDone.fetch_add(1, std::memory_order_relaxed) + 1;
             if (hashProgress) hashProgress(int(done), int(totalToHash));
         });
         if (shouldCancel()) {
@@ -98,9 +99,9 @@ DuplicateDetector::GroupingOutput DuplicateDetector::group(
                 if (st == Hasher::Status::Ok) {
                     byFull[fh].push_back(std::move(sub[i]));
                 } else if (st == Hasher::Status::Failed) {
-                    out.hashErrors++;
+                    hashErrors.fetch_add(1, std::memory_order_relaxed);
                 }
-                const int done = ++hashedDone;
+                const qint64 done = hashedDone.fetch_add(1, std::memory_order_relaxed) + 1;
                 if (hashProgress) hashProgress(int(done), int(totalToHash));
             });
             if (shouldCancel()) {
@@ -127,5 +128,6 @@ DuplicateDetector::GroupingOutput DuplicateDetector::group(
                   if (a.size != b.size) return a.size > b.size;
                   return a.recoverable() > b.recoverable();
               });
+    out.hashErrors = hashErrors.load();
     return out;
 }

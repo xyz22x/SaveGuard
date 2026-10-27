@@ -56,7 +56,6 @@ bool Scanner::waitIfPaused() {
 }
 
 void Scanner::emitState(const QString& s) {
-    m_stateText = s;
     emit stateChanged(s);
 }
 
@@ -187,7 +186,8 @@ void Scanner::run(ScanConfig config) {
             [this]() { return m_cancel.load(); },
             [this]() { return waitIfPaused(); },
             [this](int done, int total) {
-                if (total > 0 && done % 32 == 0) {
+                const int tick = m_stateTick.fetch_add(1, std::memory_order_relaxed);
+                if (total > 0 && tick % 32 == 0) {
                     emitState(QStringLiteral("scan_state_hash:%1:%2").arg(done).arg(total));
                 }
             });

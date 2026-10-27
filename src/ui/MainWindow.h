@@ -75,6 +75,7 @@ private:
 
     QVector<FileRecord> m_lastRecords;
     ScanStats m_lastStats;
+    QVector<DuplicateGroup> m_lastGroups;
     QDateTime m_lastScanFinishedAt;
     QVector<CleanupItem> m_pendingCleanup;
     QStringList m_cleanupFailures;

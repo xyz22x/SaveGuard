@@ -3,6 +3,12 @@
 #include <QDir>
 #include <QVector>
 
+static QString normalize(QString p) {
+    p = QDir::fromNativeSeparators(p);
+    while (p.size() > 1 && p.endsWith('/')) p.chop(1);
+    return p;
+}
+
 static QVector<QString> protectedRoots() {
     QVector<QString> roots;
 #ifdef Q_OS_WIN
@@ -17,12 +23,6 @@ static QVector<QString> protectedRoots() {
           << "/proc" << "/root" << "/run" << "/sbin" << "/srv" << "/sys" << "/usr" << "/var";
 #endif
     return roots;
-}
-
-static QString normalize(QString p) {
-    p = QDir::fromNativeSeparators(p);
-    while (p.size() > 1 && p.endsWith('/')) p.chop(1);
-    return p;
 }
 
 bool ProtectedPaths::isProtected(const QString& absolutePath) {
@@ -41,11 +41,22 @@ bool ProtectedPaths::isProtected(const QString& absolutePath) {
 }
 
 bool ProtectedPaths::isCriticalDir(const QString& dirName, const QString& absolutePath) {
+#ifdef Q_OS_WIN
     static const QVector<QString> names = {
         "$Recycle.Bin", "System Volume Information", "Windows", "Program Files",
-        "Program Files (x86)", "ProgramData", "proc", "sys", "dev", "run", "boot"
+        "Program Files (x86)", "ProgramData"
     };
     if (names.contains(dirName, Qt::CaseInsensitive)) return true;
+#else
+    const QString p = normalize(absolutePath);
+    if (p.count('/') == 1) {
+        static const QVector<QString> names = {
+            "bin", "boot", "dev", "etc", "lib", "lib32", "lib64",
+            "proc", "root", "run", "sbin", "srv", "sys", "usr", "var"
+        };
+        if (names.contains(dirName, Qt::CaseSensitive)) return true;
+    }
+#endif
     if (isProtected(absolutePath)) return true;
     return false;
 }

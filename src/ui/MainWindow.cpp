@@ -226,6 +226,7 @@ void MainWindow::startScan(const ScanConfig& config) {
     }
     setScanBusy(true);
     m_lastRecords.clear();
+    m_lastGroups.clear();
     m_activeRoots = config.roots.join(QStringLiteral(", "));
     m_activeMode = config.mode;
     QMetaObject::invokeMethod(m_scanner, [this, config]() { m_scanner->run(config); },
@@ -292,10 +293,14 @@ void MainWindow::onScanFinished(const ScanStats& stats) {
         addHistoryEntry(entry);
     }
     m_dashboard->applyScanState(m_lastStats, m_lastScanFinishedAt);
+    if (!m_lastGroups.isEmpty()) {
+        m_duplicates->applyGroups(m_lastGroups, m_lastStats);
+        m_lastGroups.clear();
+    }
 }
 
 void MainWindow::onDuplicatesReady(const QVector<DuplicateGroup>& groups) {
-    m_duplicates->applyGroups(groups, m_lastStats);
+    m_lastGroups = groups;
     m_dashboard->applyScanState(m_lastStats, m_lastScanFinishedAt);
 }
 

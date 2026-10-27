@@ -33,5 +33,5 @@ private:
     std::atomic_bool m_cancel{false};
     std::atomic_bool m_pause{false};
     std::atomic_bool m_busy{false};
-    QString m_stateText;
+    std::atomic<int> m_stateTick{0};
 };
