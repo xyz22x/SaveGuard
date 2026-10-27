@@ -34,6 +34,7 @@ private slots:
     void onScanStateChanged(const QString& state);
     void onScanBatch(const QVector<FileRecord>& records);
     void onScanFinished(const ScanStats& stats);
+    void writeErrorLog(const ScanStats& stats);
     void onDuplicatesReady(const QVector<DuplicateGroup>& groups);
     void onScanRequested(const ScanConfig& config);
     void onBigScanRequested(const ScanConfig& config);
@@ -76,6 +77,7 @@ private:
     QVector<FileRecord> m_lastRecords;
     ScanStats m_lastStats;
     QVector<DuplicateGroup> m_lastGroups;
+    QString m_lastErrorLog;
     QDateTime m_lastScanFinishedAt;
     QVector<CleanupItem> m_pendingCleanup;
     QStringList m_cleanupFailures;

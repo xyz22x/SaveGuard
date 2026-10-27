@@ -14,16 +14,22 @@
 
 #include <QApplication>
 #include <QCloseEvent>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFile>
 #include <QLabel>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QProgressBar>
 #include <QSet>
+#include <QStandardPaths>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStringList>
 #include <QStyle>
+#include <QTextStream>
+#include <QUrl>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
@@ -154,6 +160,10 @@ void MainWindow::connectPages() {
     connect(m_dashboard, &DashboardPage::navigateTo, this, &MainWindow::switchPage);
     connect(m_dashboard, &DashboardPage::rescanRequested, this, [this]() {
         switchPage(1);
+    });
+    connect(m_dashboard, &DashboardPage::openErrorsLogRequested, this, [this]() {
+        if (m_lastErrorLog.isEmpty()) return;
+        QDesktopServices::openUrl(QUrl::fromLocalFile(m_lastErrorLog));
     });
     connect(m_settingsPage, &SettingsPage::settingsSaved, this, [this]() {
         m_dashboard->refreshDrives();
@@ -297,6 +307,40 @@ void MainWindow::onScanFinished(const ScanStats& stats) {
         m_duplicates->applyGroups(m_lastGroups, m_lastStats);
         m_lastGroups.clear();
     }
+    writeErrorLog(stats);
+}
+
+void MainWindow::writeErrorLog(const ScanStats& stats) {
+    m_lastErrorLog.clear();
+    if (stats.errors <= 0) return;
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                            + QStringLiteral("/logs");
+    QDir().mkpath(dir);
+    const QString file = dir + QStringLiteral("/erros-")
+                             + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss"))
+                             + QStringLiteral(".log");
+    QFile f(file);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) return;
+    QTextStream out(&f);
+    out.setEncoding(QStringConverter::Utf8);
+    out << "SaveGuard - registro de erros da analise\n";
+    out << "Data: " << QDateTime::currentDateTime().toString(QStringLiteral("dd/MM/yyyy HH:mm:ss")) << "\n";
+    out << "Pastas: " << m_activeRoots << "\n";
+    out << "Tipo: " << (m_activeMode == ScanMode::BigFiles ? QStringLiteral("arquivos grandes")
+                                                           : QStringLiteral("duplicatas"))
+        << "\n";
+    out << "Arquivos analisados: " << stats.filesIndexed << "\n";
+    out << "Total de erros: " << stats.errors << "\n";
+    out << "Codigos: ROOT=pasta raiz inacessivel | DENIED-DIR=pasta sem permissao de leitura | "
+           "DIR-READ=leitura da pasta interrompida | REPARSE=atalho/reparse ilegivel | "
+           "FILE-ACCESS=arquivo bloqueado (comum em aliases de app do WindowsApps) | "
+           "FILE-TIME=data de modificacao indisponivel | HASH-FAIL=arquivo ilegivel durante o hash\n";
+    for (const QString& s : stats.errorSamples) out << s << "\n";
+    const qint64 extra = stats.errors - qint64(stats.errorSamples.size());
+    if (extra > 0) out << "... e " << extra << " ocorrencia(s) nao listadas (limite de 200)\n";
+    out.flush();
+    f.close();
+    m_lastErrorLog = file;
 }
 
 void MainWindow::onDuplicatesReady(const QVector<DuplicateGroup>& groups) {

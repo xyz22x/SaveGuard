@@ -57,6 +57,8 @@ I18n::I18n() {
         {"dash_shortcuts", {"Atalhos", "Shortcuts"}},
         {"dash_recent", {"Operações recentes", "Recent operations"}},
         {"dash_errors_line", {"%1 erro(s) durante a análise", "%1 error(s) during the scan"}},
+        {"dash_errors_log", {"ver registro de erros", "view error log"}},
+        {"dash_errors_log_tooltip", {"Abre o registro com os caminhos dos %1 erro(s)", "Opens the log with the paths of the %1 error(s)"}},
         {"dup_folders", {"Pastas a analisar", "Folders to scan"}},
         {"dup_folders_hint", {"Adicione uma ou mais pastas. Diretórios do sistema são ignorados automaticamente.", "Add one or more folders. System directories are skipped automatically."}},
         {"dup_empty", {"Nenhuma análise executada. Adicione pastas e clique em Analisar.", "No scan yet. Add folders and click Scan."}},

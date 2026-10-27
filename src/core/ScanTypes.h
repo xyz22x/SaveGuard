@@ -30,6 +30,7 @@ struct ScanStats {
     int duplicateGroups = 0;
     qint64 duplicateSpace = 0;
     QString state;
+    QStringList errorSamples;
 };
 
 struct DuplicateGroup {

@@ -21,6 +21,7 @@ public:
 signals:
     void navigateTo(int page);
     void rescanRequested();
+    void openErrorsLogRequested();
 
 private:
     void buildUi();
@@ -32,5 +33,6 @@ private:
     QLabel* m_statRecoverable = nullptr;
     QLabel* m_lastScan = nullptr;
     QPushButton* m_rescan = nullptr;
+    QPushButton* m_errorsLog = nullptr;
     QListWidget* m_recent = nullptr;
 };

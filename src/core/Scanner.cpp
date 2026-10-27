@@ -14,7 +14,19 @@
 
 namespace fs = std::filesystem;
 
+constexpr int kMaxErrorSamples = 200;
+
 namespace {
+
+struct ErrorSink {
+    qint64* total;
+    QStringList* samples;
+    void add(const char* kind, const QString& path) {
+        (*total)++;
+        if (samples->size() < kMaxErrorSamples)
+            samples->append(QString::fromLatin1(kind) + QStringLiteral("|") + path);
+    }
+};
 
 bool isIgnoredExtension(const QString& file, const QStringList& exts) {
     if (exts.isEmpty()) return false;
@@ -72,6 +84,7 @@ void Scanner::run(ScanConfig config) {
     ScanStats stats;
     QElapsedTimer timer;
     timer.start();
+    ErrorSink err{&stats.errors, &stats.errorSamples};
 
     const QStringList exts = config.ignoredExtensions;
     const QStringList dirs = config.ignoredDirs;
@@ -96,7 +109,7 @@ void Scanner::run(ScanConfig config) {
         const fs::path rp = toFsPath(QDir::fromNativeSeparators(root));
         std::error_code ec;
         if (!fs::exists(rp, ec) || ec) {
-            stats.errors++;
+            err.add("ROOT", root);
             continue;
         }
         stack.push_back(rp);
@@ -113,13 +126,13 @@ void Scanner::run(ScanConfig config) {
         std::error_code ec;
         fs::directory_iterator it(dir, ec);
         if (ec) {
-            stats.errors++;
+            err.add("DENIED-DIR", dirStr);
             ec.clear();
             continue;
         }
         for (; it != fs::directory_iterator(); it.increment(ec)) {
             if (ec) {
-                stats.errors++;
+                err.add("DIR-READ", dirStr);
                 ec.clear();
                 continue;
             }
@@ -132,7 +145,7 @@ void Scanner::run(ScanConfig config) {
 
             fs::file_status lst = fs::symlink_status(entry, ec);
             if (ec) {
-                stats.errors++;
+                err.add("REPARSE", entryStr);
                 ec.clear();
                 continue;
             }
@@ -152,13 +165,13 @@ void Scanner::run(ScanConfig config) {
             std::error_code sec;
             const uintmax_t sz = fs::file_size(entry, sec);
             if (sec) {
-                stats.errors++;
+                err.add("FILE-ACCESS", entryStr);
                 sec.clear();
                 continue;
             }
             const fs::file_time_type wt = fs::last_write_time(entry, sec);
             if (sec) {
-                stats.errors++;
+                err.add("FILE-TIME", entryStr);
                 sec.clear();
                 continue;
             }
@@ -200,6 +213,11 @@ void Scanner::run(ScanConfig config) {
             stats.duplicateGroups = result.groups.size();
             stats.duplicateSpace = space;
             stats.errors += result.hashErrors;
+            if (result.hashErrors > 0 && stats.errorSamples.size() < kMaxErrorSamples) {
+                stats.errorSamples.append(QStringLiteral("HASH-FAIL|")
+                    + QString::number(result.hashErrors)
+                    + QStringLiteral(" arquivos ilegeveis durante o hash"));
+            }
             emit duplicatesReady(result.groups);
             stats.state = QStringLiteral("done");
         }

@@ -56,6 +56,17 @@ void DashboardPage::buildUi() {
     m_rescan = new QPushButton(this);
     connect(m_rescan, &QPushButton::clicked, this, &DashboardPage::rescanRequested);
 
+    m_errorsLog = new QPushButton(this);
+    m_errorsLog->setObjectName("dashErrorsLog");
+    m_errorsLog->setVisible(false);
+    connect(m_errorsLog, &QPushButton::clicked, this, &DashboardPage::openErrorsLogRequested);
+
+    auto* actionRow = new QHBoxLayout;
+    actionRow->setSpacing(8);
+    actionRow->addWidget(m_rescan);
+    actionRow->addWidget(m_errorsLog);
+    actionRow->addStretch(1);
+
     auto* drivesTitle = new QLabel(this);
     Theme::setClass(drivesTitle, "h2");
     drivesTitle->setObjectName("dashDrivesTitle");
@@ -96,7 +107,7 @@ void DashboardPage::buildUi() {
     layout->addWidget(title);
     layout->addLayout(statsRow);
     layout->addWidget(m_lastScan);
-    layout->addWidget(m_rescan, 0, Qt::AlignLeft);
+    layout->addLayout(actionRow);
     layout->addWidget(drivesTitle);
     layout->addWidget(m_drives, 1);
     layout->addWidget(recentTitle);
@@ -112,6 +123,7 @@ void DashboardPage::retranslate() {
     findChild<QLabel*>("dashDrivesTitle")->setText(i18n("dash_drives"));
     findChild<QLabel*>("dashRecentTitle")->setText(i18n("dash_recent"));
     m_rescan->setText(i18n("btn_rescan"));
+    m_errorsLog->setText(i18n("dash_errors_log"));
     findChild<QPushButton*>("shortcutDuplicates")->setText(i18n("nav_duplicates"));
     findChild<QPushButton*>("shortcutBigFiles")->setText(i18n("nav_bigfiles"));
     findChild<QPushButton*>("shortcutHistory")->setText(i18n("nav_history"));
@@ -157,7 +169,13 @@ void DashboardPage::applyScanState(const ScanStats& stats, const QDateTime& fini
     } else {
         line += i18n("dash_never");
     }
-    if (stats.errors > 0) line += QStringLiteral(" · ") + i18n("dash_errors_line").arg(stats.errors);
+    if (stats.errors > 0) {
+        line += QStringLiteral(" · ") + i18n("dash_errors_line").arg(stats.errors);
+        m_errorsLog->setVisible(true);
+        m_errorsLog->setToolTip(i18n("dash_errors_log_tooltip").arg(stats.errors));
+    } else {
+        m_errorsLog->setVisible(false);
+    }
     m_lastScan->setText(line);
 }
 
